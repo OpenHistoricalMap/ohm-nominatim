@@ -21,6 +21,17 @@ Parameters:
     Type: String
     Default: http://planet.openhistoricalmap.org/planet/
     Description: Planet dumps URL to seed Nominatim
+  DBName:
+    Type: String
+    Default: nominatim
+    Description: Name for the RDS instance
+  DBUsername:
+    Type: String
+    Default: ohm
+    Description: Username for the RDS instance
+  DBPassword:
+    Type: String
+    Description: Password for the RDS instance
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -229,6 +240,23 @@ Resources:
     Properties:
       LogGroupName: /ecs/ohm-nominatim
 
+  NominatimRDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: '5'
+      DBInstanceClass: db.m1.small
+      DBName:
+        Ref: DBName
+      DBSecurityGroups:
+      - Ref: FargateContainerSecurityGroup
+      Engine: 'postgres'
+      EngineVersion: '11'
+      MasterUserPassword:
+        Ref: DBPassword
+      MasterUsername:
+        Ref: DBUsername
+      DeletionPolicy: Snapshot
+
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
   NominatimInitTask:
@@ -251,7 +279,17 @@ Resources:
           Command: ["bash", "/app/init.sh"] # TODO: this needs to fetch the pbf so might need a wrapper
           Environment:
             - Name: REPLICATION_URL
-              Value: !Sub '{$PlanetURL}'
+              Value: !Ref PlanetURL
+            - Name: PG_HOST
+              Value: !Ref RDS.Endpoint.Address
+            - Name: PG_PORT
+              Value: !Ref RDS.Endpoint.Port
+            - Name: PG_USER
+              Value: !Ref DBUsername
+            - Name: PG_PASSWORD
+              Value: !Ref DBPassword
+            - Name: PG_DATABASE
+              Value: !Ref DBName
           PortMappings:
             - ContainerPort: 8080
               HostPort: 8000
@@ -280,6 +318,17 @@ Resources:
           Memory: 2048
           Image: '' # TODO: add image URL from ECR
           Command: ["bash", "/app/start.sh"] # TODO: verify this
+          Environment:
+            - Name: PG_HOST
+              Value: !Ref RDS.Endpoint.Address
+            - Name: PG_PORT
+              Value: !Ref RDS.Endpoint.Port
+            - Name: PG_USER
+              Value: !Ref DBUsername
+            - Name: PG_PASSWORD
+              Value: !Ref DBPassword
+            - Name: PG_DATABASE
+              Value: !Ref DBName
           PortMappings:
             - ContainerPort: 8080
               HostPort: 8000
@@ -308,6 +357,17 @@ Resources:
           Memory: 2048
           Image: '' # TODO: add image URL from ECR
           Command: ["sudo -u postgres ./src/build/utils/update.php --init && sudo -u postgres ./src/build/utils/update.php --import-osmosis-all"] # TODO: verify this doesn't run init all the time
+          Environment:
+            - Name: PG_HOST
+              Value: !Ref RDS.Endpoint.Address
+            - Name: PG_PORT
+              Value: !Ref RDS.Endpoint.Port
+            - Name: PG_USER
+              Value: !Ref DBUsername
+            - Name: PG_PASSWORD
+              Value: !Ref DBPassword
+            - Name: PG_DATABASE
+              Value: !Ref DBName
           Environment:
             - Name: REPLICATION_URL
               Value: !Sub '{$PlanetURL}'
