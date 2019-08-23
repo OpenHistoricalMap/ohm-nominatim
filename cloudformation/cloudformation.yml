@@ -247,7 +247,7 @@ Resources:
       DBInstanceClass: db.m5.large
       DBName:
         Ref: DBName
-      DBSecurityGroups:
+      VPCSecurityGroups:
       - Ref: FargateContainerSecurityGroup
       Engine: 'postgres'
       EngineVersion: '11'
