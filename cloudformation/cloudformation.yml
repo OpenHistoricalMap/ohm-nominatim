@@ -240,11 +240,11 @@ Resources:
     Properties:
       LogGroupName: /ecs/ohm-nominatim
 
-  NominatimRDS:
+  RDS:
     Type: AWS::RDS::DBInstance
     Properties:
       AllocatedStorage: '5'
-      DBInstanceClass: db.m1.small
+      DBInstanceClass: db.m5.large
       DBName:
         Ref: DBName
       DBSecurityGroups:
@@ -255,7 +255,6 @@ Resources:
         Ref: DBPassword
       MasterUsername:
         Ref: DBUsername
-      DeletionPolicy: Snapshot
 
   # The task definition. This is a simple metadata description of what
   # container to run, and what resource requirements it has.
@@ -281,18 +280,15 @@ Resources:
             - Name: REPLICATION_URL
               Value: !Ref PlanetURL
             - Name: PG_HOST
-              Value: !Ref RDS.Endpoint.Address
+              Value: !GetAtt RDS.Endpoint.Address
             - Name: PG_PORT
-              Value: !Ref RDS.Endpoint.Port
+              Value: !GetAtt RDS.Endpoint.Port
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
               Value: !Ref DBPassword
             - Name: PG_DATABASE
               Value: !Ref DBName
-          PortMappings:
-            - ContainerPort: 8080
-              HostPort: 8000
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -320,9 +316,9 @@ Resources:
           Command: ["bash", "/app/start.sh"] # TODO: verify this
           Environment:
             - Name: PG_HOST
-              Value: !Ref RDS.Endpoint.Address
+              Value: !GetAtt RDS.Endpoint.Address
             - Name: PG_PORT
-              Value: !Ref RDS.Endpoint.Port
+              Value: !GetAtt RDS.Endpoint.Port
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
@@ -359,9 +355,9 @@ Resources:
           Command: ["sudo -u postgres ./src/build/utils/update.php --init && sudo -u postgres ./src/build/utils/update.php --import-osmosis-all"] # TODO: verify this doesn't run init all the time
           Environment:
             - Name: PG_HOST
-              Value: !Ref RDS.Endpoint.Address
+              Value: !GetAtt RDS.Endpoint.Address
             - Name: PG_PORT
-              Value: !Ref RDS.Endpoint.Port
+              Value: !GetAtt RDS.Endpoint.Port
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
@@ -371,9 +367,6 @@ Resources:
           Environment:
             - Name: REPLICATION_URL
               Value: !Sub '{$PlanetURL}'
-          PortMappings:
-            - ContainerPort: 8080
-              HostPort: 8000
           LogConfiguration:
             LogDriver: awslogs
             Options:
