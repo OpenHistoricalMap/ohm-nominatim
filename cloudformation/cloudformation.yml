@@ -275,7 +275,7 @@ Resources:
         - Name: 'nominatim-init'
           Cpu: 512
           Memory: 2048
-          Image: '' # TODO: add image URL from ECR
+          Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
           Command: ["bash", "/app/init.sh"] # TODO: this needs to fetch the pbf so might need a wrapper
           Environment:
             - Name: REPLICATION_URL
@@ -316,7 +316,7 @@ Resources:
         - Name: 'nominatim-api'
           Cpu: 512
           Memory: 2048
-          Image: '' # TODO: add image URL from ECR
+          Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
           Command: ["bash", "/app/start.sh"] # TODO: verify this
           Environment:
             - Name: PG_HOST
@@ -355,7 +355,7 @@ Resources:
         - Name: 'nominatim-update'
           Cpu: 512
           Memory: 2048
-          Image: '' # TODO: add image URL from ECR
+          Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
           Command: ["sudo -u postgres ./src/build/utils/update.php --init && sudo -u postgres ./src/build/utils/update.php --import-osmosis-all"] # TODO: verify this doesn't run init all the time
           Environment:
             - Name: PG_HOST
