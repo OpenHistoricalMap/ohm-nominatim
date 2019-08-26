@@ -460,7 +460,7 @@ Resources:
             - !Ref PublicSubnetTwo
       TaskDefinition: !Ref 'NominatimAPITask'
       LoadBalancers:
-        - ContainerName: ohm-nominatim
+        - ContainerName: nominatim-api
           ContainerPort: 8080
           TargetGroupArn: !Ref 'TargetGroup'
 
