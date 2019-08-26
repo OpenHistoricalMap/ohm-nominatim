@@ -17,5 +17,5 @@
  @define('CONST_Replication_Recheck_Interval', '900');   // How long to sleep if no update found yet
  @define('CONST_Pyosmium_Binary', '/usr/local/bin/pyosmium-get-changes');
 
- @define('CONST_Database_DSN', 'pgsql:host=$pg_host;port=$pg_port;user=$pg_user;password=$pg_pass;dbname=$pg_dbname'); <driver>:host=<host>;port=<port>;user=<username>;password=<password>;dbname=<database>
+ @define('CONST_Database_DSN', 'pgsql:host=$pg_host;port=$pg_port;user=$pg_user;password=$pg_pass;dbname=$pg_dbname'); // <driver>:host=<host>;port=<port>;user=<username>;password=<password>;dbname=<database>
 ?>
