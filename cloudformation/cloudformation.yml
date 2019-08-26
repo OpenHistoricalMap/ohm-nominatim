@@ -368,7 +368,7 @@ Resources:
               Value: !Ref DBName
           PortMappings:
             - ContainerPort: 8080
-              HostPort: 8000
+              HostPort: 8080
           LogConfiguration:
             LogDriver: awslogs
             Options:
