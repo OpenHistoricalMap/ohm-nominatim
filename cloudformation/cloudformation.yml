@@ -133,6 +133,26 @@ Resources:
     Properties:
       GroupDescription: Access to the Fargate containers
       VpcId: !Ref 'VPC'
+      SecurityGroupEgress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "-1"
+      SecurityGroupIngress:
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+        - CidrIp: "0.0.0.0/0"
+          IpProtocol: "tcp"
+          FromPort: 8000
+          ToPort: 8000
   EcsSecurityGroupIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -240,6 +260,26 @@ Resources:
     Properties:
       LogGroupName: /ecs/ohm-nominatim
 
+  DBSecurityGroup:
+    Type: AWS::RDS::DBSecurityGroup
+    Properties:
+      EC2VpcId: !GetAtt FargateContainerSecurityGroup.VpcId
+      DBSecurityGroupIngress:
+        EC2SecurityGroupId: !GetAtt FargateContainerSecurityGroup.GroupId
+      GroupDescription: DB access
+
+  DBSubnetGroup:
+    Properties:
+      DBSubnetGroupDescription: description
+      SubnetIds:
+      - !Ref PublicSubnetOne
+      - !Ref PublicSubnetTwo
+      Tags:
+        -
+          Key: String
+          Value: String
+    Type: "AWS::RDS::DBSubnetGroup"
+
   RDS:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -247,8 +287,9 @@ Resources:
       DBInstanceClass: db.m5.large
       DBName:
         Ref: DBName
-      VPCSecurityGroups:
-      - Ref: FargateContainerSecurityGroup
+      DBSecurityGroups:
+      - Ref: DBSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
       Engine: 'postgres'
       EngineVersion: '11'
       MasterUserPassword:
