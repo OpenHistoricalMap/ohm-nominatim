@@ -24,6 +24,16 @@ services:
     env_file: 
       - ./.env
     entrypoint: sh /app/startpostgres.sh postgresdata
+  init:
+    image: nominatim:v1
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    entrypoint: sh /app/init.sh http://download.geofabrik.de/europe/monaco-latest.osm.bz2 postgresdata 4
   update:
     image: nominatim:v1
     build:
