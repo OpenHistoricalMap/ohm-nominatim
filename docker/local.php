@@ -5,7 +5,6 @@
  $pg_user = getenv('PG_USER');
  $pg_pass = getenv('PG_PASSWORD');
  $pg_dbname = getenv('PG_DATABASE');
- echo "logging: $pg_host $pg_port $pg_user $pg_password"
  $replication_url = getenv('REPLICATION_URL');
  // Paths
  @define('CONST_Postgresql_Version', '11');
