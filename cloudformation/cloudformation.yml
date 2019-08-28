@@ -192,7 +192,7 @@ Resources:
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
-          Value: '30'
+          Value: '120'
       Subnets:
         # The load balancer is placed into the public subnets, so that traffic
         # from the internet can reach the load balancer directly via
@@ -205,10 +205,10 @@ Resources:
   DummyTargetGroupPublic:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckIntervalSeconds: 6
+      HealthCheckIntervalSeconds: 121
       HealthCheckPath: /
       HealthCheckProtocol: HTTP
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckTimeoutSeconds: 120
       HealthyThresholdCount: 2
       Name: !Join ['-', [!Ref 'AWS::StackName', 'drop-1']]
       Port: 80
@@ -316,7 +316,7 @@ Resources:
           Cpu: 512
           Memory: 2048
           Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
-          Command: ["bash", "/app/init.sh"] # TODO: this needs to fetch the pbf so might need a wrapper
+          Command: ["bash", "/app/init.sh", "http://planet.openhistoricalmap.org/planet/ohm_planet_2019-08-27.osm.bz2", "postgresdata", "4"] # TODO: this needs to fetch the pbf so might need a wrapper
           Environment:
             - Name: REPLICATION_URL
               Value: !Ref PlanetURL

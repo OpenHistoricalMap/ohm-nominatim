@@ -13,7 +13,7 @@ RUN apt-get -y update -qq && \
     postgresql-server-dev-11 postgresql-11-postgis-2.5 postgresql-contrib-11 \
     apache2 php php-pgsql libapache2-mod-php php-pear php-db \
     php-intl git curl sudo \
-    python3-pip libboost-python-dev \
+    python3-pip libboost-python-dev wget \
     osmosis && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
