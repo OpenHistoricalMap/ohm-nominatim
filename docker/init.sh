@@ -6,8 +6,6 @@ mkdir -p /data/$PGDIR && \
 wget $1 -O osmfile.osm.bz2
 OSMFILE=osmfile.osm.bz2
 
-chown postgres:postgres /data/$PGDIR && \
-
 export  PGDATA=/data/$PGDIR  && \
 useradd -m -p password1234 nominatim && \
 chown -R nominatim:nominatim ./src && \
