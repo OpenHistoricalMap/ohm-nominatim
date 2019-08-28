@@ -11,7 +11,7 @@ if psql -lqt | cut -d \| -f 1 | grep -qw 'nominatim'; then
 else
     echo 'DB does not exist. Importing'
     mkdir -p /data/$PGDIR && \
-    wget $1 -O osmfile.osm.bz2
+    wget $1 -q -O osmfile.osm.bz2
     OSMFILE=osmfile.osm.bz2
 
     # export  PGDATA=/data/$PGDIR  && \
