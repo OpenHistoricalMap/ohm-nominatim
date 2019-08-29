@@ -258,7 +258,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: /ecs/ohm-nominatim
+      LogGroupName: !Sub /ecs/ohm-nominatim-${AWS::StackName}
 
   DBSecurityGroup:
     Type: AWS::RDS::DBSecurityGroup
@@ -354,7 +354,7 @@ Resources:
           Cpu: 512
           Memory: 2048
           Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
-          Command: ["bash", "/app/start.sh"] # TODO: verify this
+          Command: ["bash", "/app/startapache.sh"]
           Environment:
             - Name: PG_HOST
               Value: !GetAtt RDS.Endpoint.Address
