@@ -15,10 +15,9 @@ if psql -h $PG_HOST -p $PG_PORT -U $PG_USER -lqt | cut -d \| -f 1 | grep -qw 'no
         psql -h $PG_HOST -p $PG_PORT -U $PG_USER -tAc "SELECT 1 FROM pg_roles WHERE rolname='nominatim'" | grep -q 1 || createuser -h $PG_HOST -p $PG_PORT -U $PG_USER -s nominatim && \
         psql -h $PG_HOST -p $PG_PORT -U $PG_USER -tAc "SELECT 1 FROM pg_roles WHERE rolname='www-data'" | grep -q 1 || createuser -h $PG_HOST -p $PG_PORT -U $PG_USER -SDR www-data && \
         mkdir -p /data/$PGDIR && \
-        wget $1 -q -O osmfile.osm.bz2
-        OSMFILE=osmfile.osm.bz2
-
-        # export  PGDATA=/data/$PGDIR  && \
+        echo "Downloading...$1"
+        wget $1 -q -O osmfile.osm.bz2 && \
+        OSMFILE=osmfile.osm.bz2 && \
         ./src/build/utils/setup.php --osm-file $OSMFILE --setup-db \
          --import-data --create-functions \
          --create-tables --create-partition-tables \
@@ -31,9 +30,7 @@ if psql -h $PG_HOST -p $PG_PORT -U $PG_USER -lqt | cut -d \| -f 1 | grep -qw 'no
 else
     echo 'DB does not exist. Run all operations'
     mkdir -p /data/$PGDIR && \
-    wget $1 -q -O osmfile.osm.bz2
-    OSMFILE=osmfile.osm.bz2
-
-    # export  PGDATA=/data/$PGDIR  && \
+    wget $1 -q -O osmfile.osm.bz2 && \
+    OSMFILE=osmfile.osm.bz2 && \
     ./src/build/utils/setup.php --osm-file $OSMFILE --all --threads $THREADS
 fi

@@ -24,14 +24,21 @@ Parameters:
   DBName:
     Type: String
     Default: nominatim
-    Description: Name for the RDS instance
+    Description: Name for the database
   DBUsername:
     Type: String
-    Default: ohm
-    Description: Username for the RDS instance
+    Default: nominatim
+    Description: Username for the PG instance
   DBPassword:
     Type: String
-    Description: Password for the RDS instance
+    Description: Password for the PG instance
+  PGHost:
+    Type: String
+    Description: Hostname of PG
+  PGPort:
+    Type: String
+    Description: PG Port
+    Default: 5432
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -258,84 +265,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /ecs/ohm-nominatim-${AWS::StackName}
-
-  DBSecurityGroup:
-    Type: AWS::RDS::DBSecurityGroup
-    Properties:
-      EC2VpcId: !GetAtt FargateContainerSecurityGroup.VpcId
-      DBSecurityGroupIngress:
-        EC2SecurityGroupId: !GetAtt FargateContainerSecurityGroup.GroupId
-      GroupDescription: DB access
-
-  DBSubnetGroup:
-    Properties:
-      DBSubnetGroupDescription: description
-      SubnetIds:
-      - !Ref PublicSubnetOne
-      - !Ref PublicSubnetTwo
-      Tags:
-        -
-          Key: String
-          Value: String
-    Type: "AWS::RDS::DBSubnetGroup"
-
-  RDS:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      AllocatedStorage: '5'
-      DBInstanceClass: db.m5.large
-      DBName:
-        Ref: DBName
-      DBSecurityGroups:
-      - Ref: DBSecurityGroup
-      DBSubnetGroupName: !Ref DBSubnetGroup
-      Engine: 'postgres'
-      EngineVersion: '11'
-      MasterUserPassword:
-        Ref: DBPassword
-      MasterUsername:
-        Ref: DBUsername
-
-  # The task definition. This is a simple metadata description of what
-  # container to run, and what resource requirements it has.
-  NominatimInitTask:
-    Type: AWS::ECS::TaskDefinition
-    DependsOn: LogGroup
-    Properties:
-      Family: 'ohm-nominatim'
-      Cpu: 512
-      Memory: 2048
-      NetworkMode: awsvpc
-      RequiresCompatibilities:
-        - FARGATE
-      ExecutionRoleArn: !Ref ECSTaskExecutionRole
-      TaskRoleArn: !Ref NominatimTaskRole
-      ContainerDefinitions:
-        - Name: 'nominatim-init'
-          Cpu: 512
-          Memory: 2048
-          Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
-          Command: ["bash", "/app/init.sh", "http://planet.openhistoricalmap.org/planet/ohm_planet_2019-08-27.osm.bz2", "postgresdata", "4"] # TODO: this needs to fetch the pbf so might need a wrapper
-          Environment:
-            - Name: REPLICATION_URL
-              Value: !Ref PlanetURL
-            - Name: PG_HOST
-              Value: !GetAtt RDS.Endpoint.Address
-            - Name: PG_PORT
-              Value: !GetAtt RDS.Endpoint.Port
-            - Name: PG_USER
-              Value: !Ref DBUsername
-            - Name: PG_PASSWORD
-              Value: !Ref DBPassword
-            - Name: PG_DATABASE
-              Value: !Ref DBName
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-region: !Ref AWS::Region
-              awslogs-group: !Ref LogGroup
-              awslogs-stream-prefix: ecs
+      LogGroupName: !Sub /ecs/${AWS::StackName}
 
   NominatimAPITask:
     Type: AWS::ECS::TaskDefinition
@@ -357,9 +287,9 @@ Resources:
           Command: ["bash", "/app/startapache.sh"]
           Environment:
             - Name: PG_HOST
-              Value: !GetAtt RDS.Endpoint.Address
+              Value: !Ref PGHost
             - Name: PG_PORT
-              Value: !GetAtt RDS.Endpoint.Port
+              Value: !Ref PGPort
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
@@ -393,51 +323,26 @@ Resources:
           Cpu: 512
           Memory: 2048
           Image: '618380242247.dkr.ecr.us-east-1.amazonaws.com/nominatim'
-          Command: ["sudo -u postgres ./src/build/utils/update.php --init && sudo -u postgres ./src/build/utils/update.php --import-osmosis-all"] # TODO: verify this doesn't run init all the time
+          Command: ["bash", "/app/update.sh"]
           Environment:
             - Name: PG_HOST
-              Value: !GetAtt RDS.Endpoint.Address
+              Value: !Ref PGHost
             - Name: PG_PORT
-              Value: !GetAtt RDS.Endpoint.Port
+              Value: !Ref PGPort
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
               Value: !Ref DBPassword
             - Name: PG_DATABASE
               Value: !Ref DBName
-          Environment:
             - Name: REPLICATION_URL
-              Value: !Sub '{$PlanetURL}'
+              Value: !Ref ReplicationUrl
           LogConfiguration:
             LogDriver: awslogs
             Options:
               awslogs-region: !Ref AWS::Region
               awslogs-group: !Ref LogGroup
               awslogs-stream-prefix: ecs
-
-  # The service. The service is a resource which allows you to run multiple
-  # copies of a type of task, and gather up their logs and metrics, as well
-  # as monitor the number of running tasks and replace any that have crashed
-  NominatimInitService:
-    Type: AWS::ECS::Service
-    DependsOn: LoadBalancerRule
-    Properties:
-      ServiceName: NominatimInit
-      Cluster: !Ref ECSCluster
-      LaunchType: FARGATE
-      DeploymentConfiguration:
-        MaximumPercent: 200
-        MinimumHealthyPercent: 75
-      DesiredCount: 1
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          SecurityGroups:
-            - !Ref FargateContainerSecurityGroup
-          Subnets:
-            - !Ref PublicSubnetOne
-            - !Ref PublicSubnetTwo
-      TaskDefinition: !Ref 'NominatimInitTask'
 
   NominatimAPIService:
     Type: AWS::ECS::Service
@@ -499,7 +404,7 @@ Resources:
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
       TargetType: ip
-      Name: nominatim
+      Name: !Sub ${AWS::StackName}
       Port: 8080
       Protocol: HTTP
       UnhealthyThresholdCount: 2
