@@ -29,16 +29,6 @@ Parameters:
     Type: String
     Default: nominatim
     Description: Username for the PG instance
-  DBPassword:
-    Type: String
-    Description: Password for the PG instance
-  PGHost:
-    Type: String
-    Description: Hostname of PG
-  PGPort:
-    Type: String
-    Description: PG Port
-    Default: 5432
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -287,13 +277,13 @@ Resources:
           Command: ["bash", "/app/startapache.sh"]
           Environment:
             - Name: PG_HOST
-              Value: !Ref PGHost
+              Value: '{{resolve:ssm:NOMINATIM_DB_HOST:1}}'
             - Name: PG_PORT
-              Value: !Ref PGPort
+              Value: '{{resolve:ssm:NOMINATIM_DB_PORT:1}}'
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
-              Value: !Ref DBPassword
+              Value: '{{resolve:ssm:NOMINATIM_DB_PASSWORD:1}}'
             - Name: PG_DATABASE
               Value: !Ref DBName
           PortMappings:
@@ -326,13 +316,13 @@ Resources:
           Command: ["bash", "/app/update.sh"]
           Environment:
             - Name: PG_HOST
-              Value: !Ref PGHost
+              Value: '{{resolve:ssm:NOMINATIM_DB_HOST:1}}'
             - Name: PG_PORT
-              Value: !Ref PGPort
+              Value: '{{resolve:ssm:NOMINATIM_DB_PORT:1}}'
             - Name: PG_USER
               Value: !Ref DBUsername
             - Name: PG_PASSWORD
-              Value: !Ref DBPassword
+              Value: '{{resolve:ssm:NOMINATIM_DB_PASSWORD:1}}'
             - Name: PG_DATABASE
               Value: !Ref DBName
             - Name: REPLICATION_URL
